@@ -1,4 +1,4 @@
-# installing-software
+# Installing software Rec-HV v2.0
 instalador 
 
 ## Publications
@@ -9,7 +9,7 @@ instalador
 3. OpenNi2.
 4. Virtualenv.
 5. RPLIDAR.
-## python libraries
+### python libraries
 1. OpenCV
 2.  roslib
 3.  rospy
@@ -47,9 +47,7 @@ $ catkin_make
 3. Build the node:
 #### Navigate to catkin workspace folder.
 ```linux
-cd src
-cd rechv2
-cd launch
+cd src/rechv2/launch
 chmod +x Rec_HV.launch
 chmod +x reconstruction.launch
 chmod +x segmentation.launch
@@ -62,16 +60,24 @@ chmod +x nodo_detection
 chmod +x nodo_reconstruction
 chmod +x nodo_segmentation
 cd ..
-cd ..
-cd ..
 ```
 ## Run
+1. Activate Virtualenv.
 ```linux
 cd ~/python36_ws
 source py36env/bin/activate
+```
+2. Workspace folder
+```linux
 cd
 cd catkin_ws/src/rdslam/src
+```
+3. Permits on lidar
+```linux
 sudo chmod 666 /dev/ttyUSB0
 ____password____
+```
+4. Run Rec-HV v2.0
+```linux
 roslaunch rechv2 Rec_HV.launch
 ```
