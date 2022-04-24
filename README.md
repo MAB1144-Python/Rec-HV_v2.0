@@ -9,7 +9,24 @@ instalador
 3. OpenNi2.
 4. Virtualenv.
 5. RPLIDAR.
-6. OpenCV
+## python libraries
+1. OpenCV
+2.  roslib
+3.  rospy
+4.  ros_numpy
+5.  math
+6.  numpy 
+7.  time
+8.  os
+9.  statistics
+10. open3d
+11. struct
+12. pandas
+13. seaborn
+14. sensor_msgs
+15. datetime
+16. Header
+
 ## Compile
 1. Assuming you already have ROS related tools installed
 ```linux
