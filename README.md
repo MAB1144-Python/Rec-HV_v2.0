@@ -49,3 +49,12 @@ cd ..
 cd ..
 ```
 ## Run
+```linux
+cd ~/python36_ws
+source py36env/bin/activate
+cd
+cd catkin_ws/src/rdslam/src
+sudo chmod 666 /dev/ttyUSB0
+____password____
+roslaunch rechv2 Rec_HV.launch
+```
