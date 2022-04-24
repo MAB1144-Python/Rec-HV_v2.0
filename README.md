@@ -47,37 +47,37 @@ $ catkin_make
 3. Build the node:
 #### Navigate to catkin workspace folder.
 ```linux
-cd src/rechv2/launch
-chmod +x Rec_HV.launch
-chmod +x reconstruction.launch
-chmod +x segmentation.launch
-cd ..
-cd src
-chmod +x evaluation.py
-chmod +x evaluation.pyc
-chmod +x regression.py
-chmod +x nodo_detection
-chmod +x nodo_reconstruction
-chmod +x nodo_segmentation
-cd ..
+$ cd src/rechv2/launch
+$ chmod +x Rec_HV.launch
+$ chmod +x reconstruction.launch
+$ chmod +x segmentation.launch
+$ cd ..
+$ cd src
+$ chmod +x evaluation.py
+$ chmod +x evaluation.pyc
+$ chmod +x regression.py
+$ chmod +x nodo_detection
+$ chmod +x nodo_reconstruction
+$ chmod +x nodo_segmentation
+$ cd ..
 ```
 ## Run
 1. Activate Virtualenv.
 ```linux
-cd ~/python36_ws
-source py36env/bin/activate
+$ cd ~/python36_ws
+$ source py36env/bin/activate
 ```
 2. Workspace folder
 ```linux
-cd
-cd catkin_ws/src/rdslam/src
+$ cd
+$ cd catkin_ws/src/rdslam/src
 ```
 3. Permits on lidar
 ```linux
-sudo chmod 666 /dev/ttyUSB0
-____password____
+$ sudo chmod 666 /dev/ttyUSB0
+$ ____password____
 ```
 4. Run Rec-HV v2.0
 ```linux
-roslaunch rechv2 Rec_HV.launch
+$ roslaunch rechv2 Rec_HV.launch
 ```
