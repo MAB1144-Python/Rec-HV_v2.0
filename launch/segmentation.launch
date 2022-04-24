@@ -1,0 +1,5 @@
+<launch>
+    <!-- My Package launch file -->
+    <node pkg="rechv2" type="nodo_segmentation" name="nodo_segmentation" output="screen">
+    </node>
+</launch>

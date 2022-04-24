@@ -1,0 +1,10 @@
+<launch>
+    <include file="$(find rplidar_ros)/launch/rplidar.launch" />
+    <include file="$(find openni_launch)/launch/openni.launch" />
+    <include file="$(find rechv2)/launch/segmentation.launch" />
+    <include file="$(find rechv2)/launch/reconstruction.launch" />
+    <node name="rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find rechv2)/include/rechv2/rechv2.rviz" />
+    <!-- My Package launch file -->
+    <node pkg="rechv2" type="nodo_detection" name="nodo_detection" output="screen">
+    </node>
+</launch>
