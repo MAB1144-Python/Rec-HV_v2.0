@@ -1,0 +1,215 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import roslib
+import rospy
+import math
+import sys
+import cv2
+import numpy as np
+np.seterr(divide='ignore', invalid='ignore')
+import time
+import os
+import ros_numpy
+import open3d as o3d
+import struct
+import time
+import pandas as pd
+from sensor_msgs import point_cloud2 as pc
+from sensor_msgs.msg import PointCloud2, PointField
+from email.header import Header
+
+xyz_point_ant = np.zeros((1,3), dtype=object)
+cont = 1
+tiempo_inicial = 0
+tope = 5
+xt = 0
+yt = 0
+zt = 0
+size_xzy = 0
+data_orb = [0,0,0,0,0,0]
+xeje = 400
+yeje = 500
+
+class RECONSTRUCCION(object):  
+
+  def __init__(self):
+     self.pub_rec = rospy.Publisher("/point_cloud_segmentation", PointCloud2, queue_size=8)
+     self.pub_din = rospy.Publisher("/point_cloud_dynamic", PointCloud2, queue_size=6)
+     self.sub_kin = rospy.Subscriber("point_cloud_reduced" , PointCloud2, self.ptcloud2)
+
+  def ptcloud2(self, msg):  
+     global xyz_point_ant
+     global cont
+     global tope
+     global xt
+     global yt
+     global zt
+     global xeje
+     negativo_xyz = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(msg)
+     max_z,min_z,vx_m =negativo_xyz[-3]
+     data_orb[0],data_orb[1],data_orb[2] = negativo_xyz[-2]
+     data_orb[3],data_orb[4],data_orb[5] = negativo_xyz[-1]
+     negativo_xyz =negativo_xyz[:-3,0:3]
+     zona = [max_z,min_z,0,0]
+     evento="static"
+     if True:
+        m_xyz_in = len(negativo_xyz)
+        corte_xyz, negativo_xyz,evento, pos_xyz, size_pcl = self.segmentation( negativo_xyz,zona,cont,vx_m)
+        pc_rec = self.procesamiento_depth(negativo_xyz)
+        self.pub_rec.publish(pc_rec)
+
+        try:
+          pc_din = self.procesamiento_depth_din(corte_xyz)
+          self.pub_din.publish(pc_din)
+        except: 
+          pc_din = self.procesamiento_depth([[0,0,0]] )
+          self.pub_din.publish(pc_din)
+  
+        if True:
+             pcd = o3d.geometry.PointCloud()
+             try:
+                pcd.points =  o3d.utility.Vector3dVector(corte_xyz)
+                pcd.paint_uniform_color([0.3, 0.651, 0.3]) 
+                o3d.io.write_point_cloud("cloud_dynamic_"+str(cont)+".ply",pcd)
+             except: 
+                pcd.points =  o3d.utility.Vector3dVector([[0,0,0]])
+                pcd.paint_uniform_color([0.3, 0.651, 0.3]) 
+                o3d.io.write_point_cloud("cloud_dynamic_"+str(cont)+".ply",pcd)
+             try:
+                pcd.points =  o3d.utility.Vector3dVector(negativo_xyz)
+                pcd.paint_uniform_color([0, 0.651, 0.929]) 
+                o3d.io.write_point_cloud("cloud_static_"+str(cont)+".ply",pcd)
+             except: 
+                pcd.points =  o3d.utility.Vector3dVector([[0,0,0]])
+                pcd.paint_uniform_color([0, 0.651, 0.929]) 
+                o3d.io.write_point_cloud("cloud_static_"+str(cont)+".ply",pcd) 
+
+     cont += 1 
+
+  def segmentation(self, xyz,zona,conteo,vx_m):
+    global xt
+    global yt
+    global zt
+    global vect_per  
+    global cont_cero
+    corte_xyz = []
+    negativo = []
+    vect = []
+    resultado = np.zeros((10,int(xeje),3), np.uint8)
+    tm = 10
+    limit_r=5
+    if zona[1] != 0.8028517365455627 and zona[0] !=2.373647928237915:
+       for elem in xyz:
+         x,y,z = elem
+         r=np.sqrt((x**2)+(y**2)+(z**2))
+         alf = math.acos(y/r)
+         if r>limit_r:
+             x = 0
+         elif alf>zona[0] or alf<zona[1]: 
+             negativo.append([x,y,z]) 
+         else:
+             corte_xyz.append([x,y,z]) 
+             if z >=0:
+                cv2.rectangle(resultado, (int(x*100-tm), int(0)),(int(x*100+tm), int(vx_m*100)),[255,255,255],-1)
+       size_pcl = [len(negativo),len(corte_xyz),0,0]        
+       if len(corte_xyz) >0:
+         gray = cv2.cvtColor(resultado,cv2.COLOR_BGR2GRAY)   
+         contours, _ = cv2.findContours(gray, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  
+         area = []
+         for c in contours:
+           c = np.array(c)
+           c = c[:,0]
+           c = pd.DataFrame(c, columns=['x', 'y'])
+           cx = c['x'].values
+           area.append([max(cx),min(cx)])
+         area = np.asarray(pd.DataFrame(area, columns=['x', 'y']))
+         area = area[area[:,0].argsort()]
+         corte_xyz = pd.DataFrame(corte_xyz, columns=['x', 'y','z'])
+         corte_xyz = corte_xyz*100
+         din = [0,0,0]
+         try:
+            din = corte_xyz[(corte_xyz['x'] < area[0][0]+50)]
+            din = din/100 
+            oclu = corte_xyz[(corte_xyz['x'] >= area[0][0]+50)] 
+            oclu = oclu/100
+            negativo = self.unir_pcd(negativo , oclu, 2, 2)
+            size_pcl[2]=len(negativo)
+            size_pcl[3]=len(din)
+            point_data = [[0,0,0],[0,0,0],[vx_m,0,0],[din['x'].min(),din['y'].min(),din['z'].min()],[din['x'].max(),din['y'].max(),din['z'].max()]]
+            negativo = np.concatenate(( negativo, point_data), axis=0)
+            return(np.asarray(din), np.asarray(negativo),"dynamic",[din['x'].mean(),din['y'].mean(),din['z'].mean()],size_pcl)  
+         except:
+            point_data = [[ORB[0],-ORB[1],ORB[2]],[ORB[3],ORB[4],ORB[5]],[vx_m,0,0],[0,0,0],[0,0,0]]
+            negativo = np.concatenate(( negativo, point_data), axis=0)
+            return(np.asarray(corte_xyz), np.asarray(negativo),"dynamic",[0,0,0],size_pcl) 
+    for elem in xyz:
+         x,y,z = elem
+         r=np.sqrt((x**2)+(y**2)+(z**2))
+         if r<=limit_r:
+            negativo.append([x,y,z]) 
+    point_data = [[0,0,0],[0,0,0],[vx_m,0,0],[0,0,0],[0,0,0]]
+    negativo = np.concatenate(( negativo, point_data), axis=0)
+    return([0,0,0], np.asarray(negativo),"static",[0,0,0],[0,0,0,0]) 
+
+  def unir_pcd(self, xyz1, negativo_xyz, a, b):
+      if len(xyz1) > 0 and len(negativo_xyz) > 0:
+         total = np.concatenate((xyz1, negativo_xyz), axis=0) 
+      elif len(xyz1) == 0 :
+         total = negativo_xyz
+      elif len(negativo_xyz) == 0:
+         total = xyz1
+      return(total) 
+      
+  def procesamiento_depth(self, pcl_total):
+     points = []
+     for i in range(len(pcl_total)):
+            x = pcl_total[i][0]
+            y = pcl_total[i][1]
+            z = pcl_total[i][2]
+            r = 0
+            g = 255
+            b = 0
+            a = 255
+            rgb = struct.unpack('I', struct.pack('BBBB', r, g, b, a))[0]
+            pt = [x, y, z, rgb]
+            points.append(pt)
+     fields = [PointField('x', 0, PointField.FLOAT32, 1),
+          PointField('y', 4, PointField.FLOAT32, 1),
+          PointField('z', 8, PointField.FLOAT32, 1),
+          PointField('rgba', 12, PointField.UINT32, 1),
+          ]
+     header = Header()
+     header.frame_id = "map"
+     pc2 = pc.create_cloud(header, fields, points)
+     pc2.header.stamp = rospy.Time.now()
+     return(pc2)  
+      
+  def procesamiento_depth_din(self, pcl_total):
+     points = []
+     for i in range(len(pcl_total)):
+            x = pcl_total[i][0]
+            y = pcl_total[i][1]
+            z = pcl_total[i][2]
+            r = 0
+            g = 0
+            b = 255
+            a = 255
+            rgb = struct.unpack('I', struct.pack('BBBB', r, g, b, a))[0]
+            pt = [x, y, z, rgb]
+            points.append(pt)
+     fields = [PointField('x', 0, PointField.FLOAT32, 1),
+          PointField('y', 4, PointField.FLOAT32, 1),
+          PointField('z', 8, PointField.FLOAT32, 1),
+          PointField('rgba', 12, PointField.UINT32, 1),
+          ]
+     header = Header()
+     header.frame_id = "map"
+     pc2 = pc.create_cloud(header, fields, points)
+     pc2.header.stamp = rospy.Time.now()
+     return(pc2)   
+
+if __name__=='__main__':
+    rospy.init_node('nodo_segmentation')
+    instancia_reconstruccion = RECONSTRUCCION()
+    rospy.loginfo("Segmentation_node")
+    rospy.spin() 
