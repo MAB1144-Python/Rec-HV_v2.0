@@ -1,5 +1,0 @@
-<launch>
-    <!-- My Package launch file -->
-    <node pkg="rechv2" type="nodo_reconstruction" name="nodo_reconstruction" output="screen">
-    </node>
-</launch>
