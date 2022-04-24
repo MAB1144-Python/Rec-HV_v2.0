@@ -33,4 +33,19 @@ $ catkin_make
 cd src
 cd rechv2
 cd launch
-
+chmod +x Rec_HV.launch
+chmod +x reconstruction.launch
+chmod +x segmentation.launch
+cd ..
+cd src
+chmod +x evaluation.py
+chmod +x evaluation.pyc
+chmod +x regression.py
+chmod +x nodo_detection
+chmod +x nodo_reconstruction
+chmod +x nodo_segmentation
+cd ..
+cd ..
+cd ..
+```
+## Run
