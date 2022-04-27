@@ -1,5 +1,5 @@
 # Installing software Rec-HV v2.0
-
+[![Alt text](https://img.youtube.com/vi/fpQ7Tt8ZwzU/0.jpg)](https://youtu.be/fpQ7Tt8ZwzU)
 
 ## Publications
 #### If you use this work in an academic context, please cite the following publication(s):
