@@ -40,7 +40,7 @@ $ sudo apt-get install -y libopencv-calib3d-dev libopencv-dev
 2. Navigate to your catkin workspace and clone the repository:
 ```linux
 $ cd ~/catkin_ws/src
-$ git clone ___________link github ______________ 
+$ git clone https://github.com/MAB1144-Python/rechv2.git 
 $ cd ..
 $ catkin_make
 ```
